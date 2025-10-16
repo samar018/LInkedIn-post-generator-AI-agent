@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI LinkedIn Post Generator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom styles for Inter font and smooth transitions */
+        :root {
+            --primary-color: #0077b5; /* LinkedIn Blue */
+            --bg-color: #f7f9fb; /* Light subtle grey background */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            transition: all 0.3s ease;
+        }
+        .card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #005f90;
+        }
+        .loader {
+            border-top-color: #0077b5;
+            -webkit-animation: spin 1s ease-in-out infinite;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+
+    <div class="w-full max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-gray-900 flex items-center justify-center">
+                <i data-lucide="award" class="w-8 h-8 mr-3 text-blue-600"></i>
+                AI LinkedIn Content Studio
+            </h1>
+            <p class="text-gray-500 mt-2">Generate professional, engagement-boosting posts instantly.</p>
+        </header>
+
+        <!-- Main Card Container -->
+        <div class="card bg-white p-6 md:p-10 rounded-xl">
+
+            <!-- Input Section -->
+            <section id="input-section" class="mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Language Selector -->
+                    <div class="md:col-span-1">
+                        <label for="language" class="block text-sm font-medium text-gray-700 mb-2">Post Language</label>
+                        <select id="language" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                            <option value="English">English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="Bangla">Bangla</option>
+                            <option value="German">German</option>
+                            <option value="Hindi">Hindi</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Topic Input -->
+                    <div class="md:col-span-2">
+                        <label for="topic" class="block text-sm font-medium text-gray-700 mb-2">Topic or Theme</label>
+                        <input type="text" id="topic" placeholder="e.g., The benefits of asynchronous work, or a recent industry trend" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button id="generate-button" onclick="generatePost()" class="btn-primary text-white font-semibold py-3 px-6 rounded-lg w-full flex items-center justify-center shadow-md hover:shadow-lg transition duration-200" disabled>
+                    <span id="button-text">Generate Engaging Post</span>
+                    <div id="loading-spinner" class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-6 w-6 ml-3 hidden"></div>
+                </button>
+            </section>
+
+            <!-- Output Section -->
+            <section id="output-section" class="mt-8 border-t pt-6 hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Generated Content</h2>
+
+                <!-- Tabs -->
+                <div class="flex border-b mb-4">
+                    <button class="tab-button px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 focus:outline-none" data-tab="formatted">Formatted Post</button>
+                    <button class="tab-button px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none" data-tab="raw">Raw JSON Data</button>
+                </div>
+
+                <!-- Tab Content: Formatted Post -->
+                <div id="tab-formatted" class="tab-content bg-gray-50 p-6 rounded-lg border relative">
+                    <h3 id="post-title" class="text-xl font-bold mb-3 text-blue-700"></h3>
+                    <p id="post-content" class="whitespace-pre-wrap text-gray-700 leading-relaxed"></p>
+                    <p id="post-cta" class="mt-4 font-medium text-green-600"></p>
+                    <p id="post-hashtags" class="mt-2 text-sm text-gray-500 italic"></p>
+
+                    <button onclick="copyContent('full-formatted-text-container')" class="absolute top-2 right-2 text-gray-400 hover:text-blue-500 p-2 rounded-full transition duration-150" title="Copy to Clipboard">
+                        <i data-lucide="copy" class="w-5 h-5"></i>
+                    </button>
+                    <div id="full-formatted-text-container" class="hidden">
+                        <!-- Container to hold the full formatted text for easy copying -->
+                        <span id="full-formatted-text"></span>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Raw JSON -->
+                <div id="tab-raw" class="tab-content hidden bg-gray-800 p-6 rounded-lg relative">
+                    <pre id="raw-json" class="text-sm text-green-300 overflow-x-auto"></pre>
+                    <button onclick="copyContent('raw-json')" class="absolute top-2 right-2 text-gray-400 hover:text-blue-500 p-2 rounded-full transition duration-150" title="Copy to Clipboard">
+                        <i data-lucide="copy" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </section>
+
+              <!-- Notification/Message Box -->
+            <div id="message-box" class="fixed bottom-4 right-4 bg-red-600 text-white p-4 rounded-lg shadow-xl hidden transition-opacity duration-300">
+                <p id="message-text"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set the base URL for your FastAPI server
+        // If running directly on port 8000, use absolute URL. Otherwise, use the Nginx proxy path.
+        const BASE_URL_API = window.location.port === '8000' 
+            ? "http://127.0.0.1:8000" 
+            : "/api"; // Correctly uses the Nginx proxy path
+
+        const topicInput = document.getElementById('topic');
+        const languageSelect = document.getElementById('language');
+        const generateButton = document.getElementById('generate-button');
+        const buttonText = document.getElementById('button-text');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const outputSection = document.getElementById('output-section');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+
+        // Initial check for topic input to enable button
+        topicInput.addEventListener('input', () => {
+            generateButton.disabled = topicInput.value.trim() === '';
+        });
+
+        // Initialize Lucide icons
+        window.onload = () => {
+            lucide.createIcons();
+            // Button starts disabled until input is provided
+            generateButton.disabled = topicInput.value.trim() === '';
+        };
+
+        // --- Core API Interaction ---
+
+        /**
+         * Shows an ephemeral message box for errors or success.
+         * @param {string} message 
+         * @param {boolean} isError 
+         */
+        function showMessage(message, isError = false) {
+            messageBox.className = `fixed bottom-4 right-4 p-4 rounded-lg shadow-xl transition-opacity duration-300 ${isError ? 'bg-red-600' : 'bg-green-600'} text-white`;
+            messageText.textContent = message;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 4000);
+        }
+
+        /**
+         * Handles the generation process by calling the FastAPI backend.
+         */
+        async function generatePost() {
+            const topic = topicInput.value.trim();
+            const language = languageSelect.value;
+
+            if (!topic) {
+                showMessage("Please enter a topic before generating.", true);
+                return;
+            }
+
+            // Set loading state
+            generateButton.disabled = true;
+            buttonText.textContent = "Generating...";
+            loadingSpinner.classList.remove('hidden');
+            outputSection.classList.add('hidden');
+
+            try {
+                // Call the unified endpoint that returns the structured JSON object
+                // Assumes the backend endpoint is now just '/generate' and returns JSON.
+                const response = await fetch(`${BASE_URL_API}/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, language })
+                });
+
+                const rawData = await response.json();
+
+                if (!response.ok || rawData.error) {
+                    const errorMsg = rawData.error || `HTTP error! Status: ${response.status}`;
+                    throw new Error(`API Error: ${errorMsg}`);
+                }
+
+                // Display content using the single JSON object
+                displayContent(rawData);
+                showMessage("Post generated successfully!");
+
+            } catch (error) {
+                console.error("Generation Error:", error);
+                showMessage(`Failed to generate post: ${error.message || 'Check console for details.'}`, true);
+            } finally {
+                // Reset loading state
+                generateButton.disabled = false;
+                buttonText.textContent = "Generate Engaging Post";
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Populates the output section with the generated structured data and formats the copy text.
+         * @param {object} rawData - The raw structured object (e.g., LinkedInPost).
+         */
+        function displayContent(rawData) {
+            outputSection.classList.remove('hidden');
+            
+            // --- Formatted Tab Content ---
+            const title = rawData.title || "No Title Provided";
+            const content = rawData.content || "No content generated.";
+            const cta = rawData.call_to_action || "No CTA.";
+            const hashtags = rawData.hashtags ? rawData.hashtags.map(tag => `#${tag}`).join(' ') : "No hashtags.";
+            
+            document.getElementById('post-title').textContent = title;
+            document.getElementById('post-content').textContent = content;
+            document.getElementById('post-cta').textContent = cta;
+            document.getElementById('post-hashtags').textContent = hashtags;
+
+            // Generate the full formatted post string for easy copying
+            const fullFormattedText = `${title}\n\n${content}\n\n${cta}\n\n${hashtags}`;
+            
+            // Set the full formatted text for the copy button
+            document.getElementById('full-formatted-text').textContent = fullFormattedText;
+
+            // --- Raw JSON Tab Content ---
+            document.getElementById('raw-json').textContent = JSON.stringify(rawData, null, 2);
+            
+            // Switch back to the formatted tab
+            switchTab(document.querySelector('.tab-button[data-tab="formatted"]'));
+        }
+
+        // --- UI/Utility Functions ---
+
+        /**
+         * Handles copying content to the clipboard using the older but safer method in iframes.
+         * @param {string} elementId - The ID of the element whose text content should be copied.
+         */
+        function copyContent(elementId) {
+            const container = document.getElementById(elementId);
+            const textToCopy = container.textContent || container.innerText;
+
+            // Create a temporary input element
+            const tempInput = document.createElement("textarea");
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999); // For mobile devices
+
+            try {
+                // Execute copy command
+                document.execCommand('copy');
+                showMessage("Copied to clipboard!");
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showMessage("Copy failed. Please select and copy manually.", true);
+            }
+            
+            document.body.removeChild(tempInput);
+        }
+
+        /**
+         * Switches between the Formatted Post and Raw JSON tabs.
+         * @param {HTMLElement} activeTabButton 
+         */
+        function switchTab(activeTabButton) {
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+            });
+
+            activeTabButton.classList.add('border-blue-500', 'text-blue-600');
+            activeTabButton.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+
+            const tabName = activeTabButton.getAttribute('data-tab');
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+            // Re-render icons if switching tabs
+            lucide.createIcons();
+        }
+
+        // Attach tab switching listeners
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => switchTab(button));
+        });
+
+    </script>
+</body>
+</html>

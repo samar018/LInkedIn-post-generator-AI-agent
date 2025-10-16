@@ -1,0 +1,22 @@
+# GitHub Models Configuration (Local Models)
+BASE_URL=http://localhost:11434
+API_KEY=your_api_key_here
+MODEL_NAME=llama2
+
+# Example values:
+# BASE_URL=http://localhost:11434
+# API_KEY=your_api_key_here
+# MODEL_NAME=llama2
+
+# Common model names:
+# - llama2
+# - mistral
+# - codellama
+# - gemma
+# - phi3
+
+# Instructions:
+# 1. Copy this file to .env
+# 2. Set BASE_URL to your local model server (usually http://localhost:11434 for Ollama)
+# 3. Set MODEL_NAME to your preferred model
+# 4. API_KEY is optional for most local setups
